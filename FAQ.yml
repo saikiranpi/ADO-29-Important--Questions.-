@@ -1,0 +1,326 @@
+1. What are the CI/CD tools you have worked with?
+A:
+- Jenkins
+- Azure DevOps
+- GitLab
+- GitHub Actions
+
+2. What types of ADO Pipelines have you worked with?
+A:
+- Classic Pipelines or Build Pipelines or Release Pipelines
+- YAML Pipelines
+
+3. What are the advantages of using YAML Pipelines when compared to Classic Pipelines?
+A:
+- YAML Pipelines are easier to maintain and version control as they are defined in a single file and stored in the repository. The default file name is azure-pipelines.yml.
+- YAML Pipelines support defining the build and release process in a single file.
+- YAML pipelines support templating and Conditions on previsous stages.
+- Reusable templates can be defined in YAML pipelines.
+- Parameters can be defined in YAML pipelines.
+
+4. What are the different stages in a YAML Pipeline?
+A: If we take example of a Java Spring Boot application, the stages in a YAML Pipeline can be as follows:
+- SAST
+- Build
+- Unit Test
+- Dockerize & Scan Docker Image
+- Publish Docker Image
+- Update manifest file
+- Deploy to Dev and Test environments
+
+5. What is the pipeline structure in a YAML Pipeline?
+A: The pipeline structure in a YAML Pipeline is as follows:
+- Trigger - When the pipeline should run
+- Variables - Variables that can be used in the pipeline
+- Pool - The agent pool to use for the pipeline
+- Stages - The different stages in the pipeline
+  - stage - The stage 1 to be executed
+    - Jobs - The different jobs in the stages
+      - Job - The job to be executed
+        - Steps - The different steps in the jobs
+          - Task - The task to be executed
+          - Script - The script to be executed
+  - stage - The stage 2 to be executed
+    - Jobs - The different jobs in the stages
+      - Job - The job to be executed
+        - Steps - The different steps in the jobs
+          - Task - The task to be executed
+          - Script - The script to be executed
+
+6. What are the different types of triggers in a YAML Pipeline?
+A: The different types of triggers in a YAML Pipeline are as follows:
+- Trigger on every commit / push
+- Trigger on every pull request
+- Trigger on a schedule
+- Trigger on a specific branch
+- Trigger on a specific tag
+
+tigger:
+   branches:
+     include:
+       - main
+       - develop
+     exclude:
+       - feature/*
+   paths:
+     include:
+       - src/*
+     exclude:
+       - src/test/*
+
+7. What trigger none means in a YAML Pipeline? or How can I stop triggering a pipeline on every commit?
+A: The trigger none means that the pipeline will not be triggered on every commit. The pipeline will have to be manually triggered. This can be useful when you want to stop triggering a pipeline on every commit.
+trigger: none
+
+8. Can how I trigger a pipeline on a schedule?
+A: Yes, you can trigger a pipeline on a schedule using the schedule trigger. The schedule trigger allows you to specify the days of the week and the time of the day when the pipeline should run.
+
+schedules:
+- cron: '0 * * * *'
+  displayName: Run Pipeline every hour
+  branches:
+    include:
+    - main
+
+9. I want to exlude a file from triggering a pipeline. How can I do that?
+A: paths:
+  exclude:
+    - README.md
+    - src/test/*
+
+10. How to create dependencies between stages & between jobs in a YAML Pipeline?
+A: When you define multiple stages in a pipeline, by default, they run sequentially in the order in which you define them in the YAML file. 
+stage-1 -> stage-2 -> stage-3
+Its important pipeline must contain at least one stage with no dependencies.
+If you want to run stages in parallel, you can define dependencies between stages using the dependsOn keyword.
+
+dependsOn:  Creates a dependency between stages and jobs. The stage or job will run only after the stages or jobs specified in the dependsOn keyword are completed.
+condition:  Specifies the condition that must be met for the stage or job to run. The stage or job will run only if the condition specified in the condition keyword is met.
+
+stages:
+- stage: QA
+  jobs:
+  - job:
+    ...
+
+- stage: Prod
+  jobs:
+  - job:
+    ...
+
+From above QA and prod stages will run sequentially which is default behavior.
+
+stages:
+- stage: QA
+  jobs:
+  - job:
+    ...
+
+- stage: Prod
+  dependsOn: QA
+  jobs:
+  - job:
+    ...
+
+From above Prod stage will run only after QA stage is completed as there is a dependency between them.
+
+stages:
+- stage: Dev
+  jobs:
+  - job:
+    ...
+
+- stage: QA
+  jobs:
+  - job:
+    ...
+
+- stage: Prod
+  dependsOn: [Dev, QA]
+  jobs:
+  - job:
+    ...
+
+The prod stage will run only after Dev and QA stages are completed as there is a dependency between them.
+
+11. How can I run stages parallel in a YAML Pipeline?
+A: Its important pipeline must contain at least one stage with no dependencies. Below Build, Test and Deploy stages will run in parallel.
+
+  - stage: Build # Stage with no dependencies
+  - stage: Test
+    dependsOn: [] # this removes the implicit dependency on previous stage and causes this to run in parallel
+  - stage: Deploy
+    dependsOn: [] # this removes the implicit dependency on previous stage and causes this to run in parallel
+
+12. How to create dependencies between jobs in a YAML Pipeline?
+A: When you define multiple jobs in a stage, by default, they run sequentially in the order in which you define them in the YAML file.
+job-1 -> job-2 -> job-3
+jobs:
+- job: A
+  steps:
+  - script: echo Job A
+- job: B
+  dependsOn: []
+  steps:
+  - script: echo Job B
+- job: C
+  dependsOn: []
+  steps:
+  - script: echo Job C
+- job: D
+  dependsOn: []
+  steps:
+  - script: echo Job D
+
+B,C,D jobs will run in parallel as there is no dependency between them after A job is completed.
+
+13. I have 3 stages A, B and C. I want to run stage C only if stage A or stage B fails. How can I do that?
+A:
+- stage: A
+  jobs:
+  - job:
+    ...
+- stage: B
+  jobs:
+  - job:
+    ...
+- stage: C
+  dependsOn:
+    - A
+    - B
+  condition: |
+    or(eq(dependencies.A.result, 'Failed'), eq(dependencies.B.result, 'Failed'))
+
+Example:
+condition: and(in(dependencies.Packer_Validate_Build.result, 'Succeeded', 'Skipped'), eq(variables.TERRAFORM_DESTROY, 'NO'), eq(variables.TERRAFORM_APPLY, 'YES'))  
+
+14. What are te diffrent types of Agents in Azure DevOps?
+A: The different types of Agents in Azure DevOps are as follows:
+- Microsoft-hosted agents: Provided by Microsoft and run in Azure. They are free and have pre-installed software.
+- Self-hosted agents: Can be installed on your own hardware or on a virtual machine (VM) in Azure or other cloud providers.
+
+15. How do you create a Self-hosted Agent in Azure DevOps?
+A: To create a Self-hosted Agent in Azure DevOps, you need to follow these steps:
+Project ->  Agent Pools -> New Agent Pool -> New Agent -> Download Agent -> Configure Agent -> Run Agent
+
+16. What are advantages of using Self-hosted Agents in Azure DevOps?
+A: The advantages of using Self-hosted Agents in Azure DevOps are as follows:
+A:
+- You can run your pipelines on your own hardware or on a virtual machine (VM) in Azure or other cloud providers.
+- You can install custom software on the self-hosted agents.
+- Security & compliance requirements can be met by using self-hosted agents.
+- Fast when compared to Microsoft-hosted agents.
+- Access to Operting System of the agent.
+
+17. Can I share a Self-hosted Agent across multiple projects in Azure DevOps?
+A: Yes, you can share a Self-hosted Agent across multiple projects in Azure DevOps. You can add the self-hosted agent to multiple agent pools and then share the agent pool with multiple projects.
+
+18. Can I install multiple Self-hosted Agents on a single machine?
+A: Yes, you can install multiple Self-hosted Agents on a single machine. You can run multiple instances of the agent on the same machine by configuring different agent names and agent pools.
+
+19. I want to connect my Azure DevOps to AWS. How can I do that?
+A: Install AWS Toolkit for Azure DevOps from the Azure DevOps Marketplace. The AWS Toolkit for Azure DevOps is an extension for Azure DevOps that makes it easy to deploy applications to AWS.
+
+Create Service Connection from Project Settings -> Service Connections -> New Service Connection -> AWS -> Next -> AWS Access Key -> Save.
+
+20. What is a Service Connection in Azure DevOps?
+A: A Service Connection in Azure DevOps is a way to connect to external and remote services. Service connections are used to connect to services like Azure, AWS, GitHub, Docker, etc. This is simiar to Service Accouts.
+
+21. What is Azure Devops Hierachy?
+A: Azure DevOps Hierachy is as follows:
+- Organization -> Project -> Repository -> Branch -> Pull Request
+
+22. Can I clone a diffrent repo in a pipeline?
+A: Yes, you can clone a diffrent repo in a pipeline using the checkout task. The checkout task allows you to clone a repository into the pipeline workspace.
+    
+resources:
+  repositories:
+  - repository: terraformsingleinstance
+    type: github
+    name: mavrick202/terraformsingleinstance
+    ref: master
+
+22. How templates are used in a YAML Pipeline?
+A: Templates are used in a YAML Pipeline to define reusable content that can be used across multiple pipelines. Templates can be used to define common tasks, jobs, and stages that can be reused in multiple pipelines.
+
+Templates are very useful if planning to deploy multiple environments like Dev, QA, Prod. We can define a template for deploying to each environment and use the template in the pipeline.
+
+22A. Where do you save the templates in a YAML Pipeline?
+A: Templates are saved in a templates folder in the repository. The default location for templates is the templates folder in the repository. The templates folder should be at the root of the repository.
+We can have jobs, stages, steps, variables, etc in the template.
+templates/
+  - deploy-dev.yml
+  - deploy-qa.yml
+  - deploy-prod.yml
+
+23. How do you managed sensitive information in a YAML Pipeline?
+A: There are diffrent types of sensitive information that can be stored in a YAML Pipeline.
+- Passwords & Secrets
+- Files as secure files
+
+We can have sensitive information like passwords and secrets in a YAML Pipeline in multiple ways.
+- As a Sesitive Variable in the pipeline, which is not recommended as it can be altered by anyone who has access to the pipeline.
+- Using variable groups to store sensitive information. Recomamded is to integrate with Azure Key Vault.
+- Using Secure Files to store sensitive information. If they are SSL certificates, SSH keys, etc, better use keyvault Certificates.
+
+24. How do you create a multi-stage pipeline in Azure DevOps?
+
+25. How variable groups are used in a YAML Pipeline?
+A: Variable groups are used to store values that you want to use across multiple pipelines. Variable groups can be linked to a pipeline and the variables in the variable group can be used in the pipeline. Variable groups are useful for storing sensitive information like passwords and secrets.
+
+Variable groups will also allow to integrate with Azure Key Vault for password versioning.
+
+We can define variable groups based on the environment like Dev, QA, Prod and use them in the pipeline.
+
+26. How to save from password changes in a YAML Pipeline (or) How can I version control secrets in a YAML Pipeline?
+A: Integration with Azure Key Vault can be used to save password changes in a YAML Pipeline. Azure Key Vault is a cloud service for securely storing and managing secrets. Azure Key Vault can be used to store and manage application secrets, keys, and certificates.
+
+27. What is a Mono-Repo? (or) If I have multiple microservices, how to keep everything in a single repository?
+A: You can have folder is for each microservice in a single repository. This is called a Mono-Repo. A Mono-Repo is a single repository that contains multiple projects or microservices. A Mono-Repo can be used to store all the projects or microservices in a single repository.
+MicroServiceA
+MicroServiceB
+MicroServiceC
+
+28. How can I make sure if there is a code change in a specific folder, only that microservice is built and deployed?
+A: In this scenario, we have root pipeline which will exclude the microservice folder as shown below.
+trigger:
+  branches:
+    include:
+     - development
+     - uat
+     - production
+    exclude: ["master","feature*","releases/*"]
+  paths:
+    exclude:
+    - demofile-exclude.txt
+    - MicroServiceA/*
+    - MicroServiceB/*
+    - MicroServiceC/*
+
+Then we need to create a pipeline for each microservice which will include only the microservice folder as shown below. 
+/MicroServiceA/azure-pipelines-a.yml
+/MicroServiceA/azure-pipelines-b.yml
+/MicroServiceA/azure-pipelines-c.yml
+
+In each pipleine we have below trigger.
+trigger:
+  branches:
+    include:
+    - development
+    - uat
+    - production
+  paths:
+    include:
+    - 'MicroServiceA/*'
+
+29. How can we target specific agents in a YAML Pipeline?
+A: Every agent has two sets of capabilities: system capabilities and user-defined capabilities. 
+System capabilities are automatically discovered by Azure Pipelines. 
+User-defined capabilities are defined by the agent administrator. You can use these capabilities to target specific agents in a YAML Pipeline.
+
+We can use the keywork demands to target specific agents in a YAML Pipeline.
+pool: 
+  name: LinuxAgentPool
+  demands:
+  - Terraform -equals Yes #User-defined capability
+  - Agent.Name -equals $(Agent.Name) #System capability
